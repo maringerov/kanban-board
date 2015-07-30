@@ -2,6 +2,6 @@ import React from 'react';
 
 export default class Note extends React.Component {
   render() {
-    return <div>Learn webpack and react</div>;
+    return <div>Learn webpack + react</div>;
   }
 }
