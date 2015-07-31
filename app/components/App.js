@@ -1,43 +1,51 @@
+import AltContainer from 'alt/AltContainer';
 import React from 'react';
 import Notes from './Notes';
+import NoteActions from '../actions/NoteActions';
+import NoteStore from '../stores/NoteStore';
+import persist from '../decorators/persist'
+import storage from '../libs/storage';
 
+const noteStorageName = 'notes';
+
+@persist(storage, noteStorageName, () => NoteStore.getState())
 export default class App extends React.Component {
   constructor(props) {
     super(props);
 
     this.addItem = this.addItem.bind(this);
+    this.itemEdited = this.itemEdited.bind(this);
 
-    this.state = {
-      notes: [
-        {
-          task: 'Learn webpack'
-        },
-        {
-          task: 'Learn react'
-        },
-        {
-          task: 'Do laundry'
-        }
-      ]
-    };
+    NoteActions.init(storage.get('notes'));
   }
 
   render() {
-    const notes = this.state.notes;
+    const notes = this.props.notes;
 
     return (
       <div>
         <button onClick={this.addItem}>+</button>
-        <Notes items={notes} />
+        <AltContainer
+          stores={[NoteStore]}
+          inject={ {
+            items: () => NoteStore.getState().notes || []
+          } }
+          >
+          <Notes onEdit={this.itemEdited} />
+        </AltContainer>
       </div>
     );
   }
 
+  itemEdited(id, task) {
+    if(task) {
+      NoteActions.update({id, task});
+    } else {
+      NoteActions.remove(id);
+    }
+  }
+
   addItem() {
-    this.setState({
-      notes: this.state.notes.concat([{
-        task: 'new task'
-      }])
-    });
+    NoteActions.create('New task');
   }
 }
