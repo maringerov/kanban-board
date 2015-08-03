@@ -1,40 +1,36 @@
 import alt from '../libs/alt';
 import NoteActions from '../actions/NoteActions';
+import findIndex from '../libs/find_index';
 
 class NoteStore {
   constructor() {
     this.bindActions(NoteActions);
 
-    this.notes = [];
+    this.notes = this.notes || [];
   }
-
-  init(data) {
-    this.setState(Array.isArray(data && data.notes) ? data : { notes: [] });
-  }
-
-  create(task) {
+  create(note) {
     const notes = this.notes;
 
     this.setState({
-      notes: notes.concat({task})
+      notes: notes.concat(note)
     });
   }
-
-  update({id, task}) {
+  update(note) {
     const notes = this.notes;
+    const targetId = findIndex(notes, 'id', note.id);
 
-    notes[id].task = task;
+    notes[targetId].task = note.task;
 
     this.setState({notes});
   }
-
-  remove(id) {
+  delete(id) {
     const notes = this.notes;
+    const targetId = findIndex(notes, 'id', id);
 
     this.setState({
-      notes: notes.slice(0, id).concat(notes.slice(id + 1))
+      notes: notes.slice(0, targetId).concat(notes.slice(targetId + 1))
     });
   }
 }
 
-export default alt.createStore(NoteStore);
+export default alt.createStore(NoteStore, 'NoteStore');

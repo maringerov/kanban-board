@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default class Note extends React.Component {
+export default class Editable extends React.Component {
   constructor(props) {
     super(props);
 
@@ -14,7 +14,6 @@ export default class Note extends React.Component {
       edited: false
     };
   }
-
   render() {
     const {value, onEdit, ...props} = this.props;
     const edited = this.state.edited;
@@ -23,34 +22,30 @@ export default class Note extends React.Component {
       {edited ? this.renderEdit() : this.renderValue()}
     </div>;
   }
-
   renderEdit() {
     return <input type='text'
       defaultValue={this.props.value}
       onBlur={this.finishEdit}
-      onKeyPress={this.checkEnter} />
+      onKeyPress={this.checkEnter}/>;
   }
-
   renderValue() {
-    return <div onClick={this.edit}>{this.props.value}</div>
+    return <div onClick={this.edit}>{this.props.value}</div>;
   }
-
   edit() {
     this.setState({
       edited: true
     });
   }
-
   checkEnter(e) {
     if(e.key === 'Enter') {
       this.finishEdit(e);
     }
   }
-
   finishEdit(e) {
     this.props.onEdit(e.target.value);
+
     this.setState({
       edited: false
-    }); 
+    });
   }
 }
