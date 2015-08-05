@@ -1,6 +1,7 @@
 import alt from '../libs/alt';
 import LaneActions from '../actions/LaneActions';
 import findIndex from '../libs/find_index';
+import update from 'react/lib/update';
 
 class LaneStore {
   constructor() {
@@ -37,6 +38,8 @@ class LaneStore {
     const lanes = this.lanes;
     const targetId = findIndex(lanes, 'id', laneId);
 
+    this.removeNote(noteId);
+
     if(targetId < 0) {
       return console.warn('Failed to find target lane');
     }
@@ -51,6 +54,21 @@ class LaneStore {
     else {
       console.warn('Already attached note to lane', lanes);
     }
+  }
+  removeNote(noteId) {
+    const lanes = this.lanes;
+    const removeLane = lanes.filter((lane) => {
+      return lane.notes.indexOf(noteId) >= 0;
+    })[0];
+
+    if(!removeLane) {
+      return;
+    }
+
+    const removeNoteId = removeLane.notes.indexOf(noteId);
+
+    removeLane.notes = removeLane.notes.slice(0, removeNoteId)
+      .concat(removeLane.notes.slice(removeNoteId + 1));
   }
   detachFromLane({laneId, noteId}) {
     const lanes = this.lanes;
@@ -72,6 +90,33 @@ class LaneStore {
     else {
       console.warn('Failed to remove note from a lane as it didn\'t exist', lanes);
     }
+  }
+  move({sourceData, targetData}) {
+    const lanes = this.lanes;
+    const sourceId = sourceData.id;
+    const targetId = targetData.id;
+    const sourceLane = lanes.filter((lane) => {
+      return lane.notes.indexOf(sourceId) >= 0;
+    })[0];
+    const targetLane = lanes.filter((lane) => {
+      return lane.notes.indexOf(targetId) >= 0;
+    })[0];
+    const sourceNoteId = sourceLane.notes.indexOf(sourceId);
+    const targetNoteId = targetLane.notes.indexOf(targetId);
+
+    if (sourceLane === targetLane) {
+      sourceLane.notes = update(sourceLane.notes, {
+        $splice: [
+          [sourceNoteId, 1],
+          [targetNoteId, 0, sourceId]
+        ]
+      });
+    } else {
+      sourceLane.notes.splice(sourceNoteId, 1);
+      targetLane.notes.splice(targetNoteId, 0, sourceId);
+    }
+
+    this.setState({lanes});
   }
 }
 
