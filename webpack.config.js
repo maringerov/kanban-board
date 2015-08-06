@@ -2,6 +2,9 @@ var path = require('path');
 var HtmlWebpackPlugin = require('html-webpack-plugin');
 var webpack = require('webpack');
 var merge = require('webpack-merge');
+var ExtractTextPlugin = require('extract-text-webpack-plugin');
+var Clean = require('clean-webpack-plugin');
+var pkg = require('./package.json');
 
 var TARGET = process.env.TARGET;
 var ROOT_PATH = path.resolve(__dirname);
@@ -15,14 +18,6 @@ var common = {
     path: path.resolve(ROOT_PATH, 'build'),
     filename: 'bundle.js'
   },
-  module: {
-    loaders: [
-      {
-        test: /\.css$/,
-        loaders: ['style', 'css']
-      }
-    ]
-  },
   plugins: [
     new HtmlWebpackPlugin({
       title: 'Kanban app'
@@ -32,9 +27,22 @@ var common = {
 
 if(TARGET === 'build') {
   module.exports = merge(common, {
+    entry: {
+      app: path.resolve(ROOT_PATH, 'app/main'),
+      vendor: Object.keys(pkg.dependencies)
+    },
+    output: {
+      path: path.resolve(ROOT_PATH, 'build'),
+      filename: 'app.[chunkhash].js'
+    },
     devtool: 'source-map',
     module: {
       loaders: [
+        {
+          test: /\.css$/,
+          loader: ExtractTextPlugin.extract('style', 'css'),
+          include: path.resolve(ROOT_PATH, 'app')
+        },
         {
           test: /\.jsx?$/,
           loader: 'babel?stage=1',
@@ -43,6 +51,12 @@ if(TARGET === 'build') {
       ]
     },
     plugins: [
+      new ExtractTextPlugin('styles.css'),
+      new Clean(['build']),
+      new webpack.optimize.CommonsChunkPlugin(
+        'vendor',
+        'vendor.[chunkhash].js'
+      ),
       new webpack.DefinePlugin({
         'process.env': {
           // This has effect on the react lib size
@@ -65,7 +79,23 @@ if(TARGET === 'dev') {
       'webpack/hot/dev-server'
     ],
     module: {
+      preLoaders: [
+        {
+          test: /\.jsx?$/,
+          loader: 'eslint-loader',
+          include: path.resolve(ROOT_PATH, 'app')
+        },
+        {
+          test: /\.css$/,
+          loader: 'csslint'
+        },
+      ],
       loaders: [
+        {
+          test: /\.css$/,
+          loaders: ['style', 'css'],
+          include: path.resolve(ROOT_PATH, 'app')
+        },
         {
           test: /\.jsx?$/,
           loaders: ['react-hot', 'babel?stage=1'],
